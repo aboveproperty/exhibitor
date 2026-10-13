@@ -39,6 +39,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -148,7 +149,12 @@ public class BackupManager implements Closeable
     public List<BackupMetaData> getAvailableBackups() throws Exception
     {
         Map<String, String>       config = getBackupConfig();
-        return backupProvider.get().getAvailableBackups(exhibitor, config);
+
+        if (backupProvider.isPresent()) {
+            return backupProvider.get().getAvailableBackups(exhibitor, config);
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     /**
@@ -160,7 +166,11 @@ public class BackupManager implements Closeable
      */
     public BackupStream getBackupStream(BackupMetaData metaData) throws Exception
     {
-        return backupProvider.get().getBackupStream(exhibitor, metaData, getBackupConfig());
+        if (backupProvider.isPresent()) {
+            return backupProvider.get().getBackupStream(exhibitor, metaData, getBackupConfig());
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -180,7 +190,7 @@ public class BackupManager implements Closeable
      */
     public List<BackupConfigSpec> getConfigSpecs()
     {
-        return backupProvider.get().getConfigs();
+        return backupProvider.transform(BackupProvider::getConfigs).or(Collections.emptyList());
     }
 
     /**
@@ -220,6 +230,12 @@ public class BackupManager implements Closeable
         File                    tempFile = File.createTempFile("exhibitor-backup", ".tmp");
         OutputStream            out = new FileOutputStream(tempFile);
         InputStream in = null;
+
+        if (!backupProvider.isPresent()) {
+            exhibitor.getLog().add(ActivityLog.Type.INFO, "BackupProvider Not Present (for restore): " + tempFile);
+            return;
+        }
+
         try
         {
             backupProvider.get().downloadBackup(exhibitor, backup, out, getBackupConfig());

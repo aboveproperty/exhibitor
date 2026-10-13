@@ -23,13 +23,13 @@ import com.netflix.exhibitor.core.entities.ServerStatus;
 import com.netflix.exhibitor.core.state.InstanceStateTypes;
 import com.netflix.exhibitor.core.state.ServerSpec;
 import com.netflix.exhibitor.core.state.UsState;
-import jsr166y.RecursiveTask;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.RecursiveTask;
 
 public class ClusterStatusTask extends RecursiveTask<List<ServerStatus>>
 {
