@@ -25,6 +25,9 @@ ec2_metadata() {
     local token=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60")
 
     case "$flag" in
+        -r|--region)
+            echo -n "region: "; curl -s -H "X-aws-ec2-metadata-token: $token" http://169.254.169.254/latest/meta-data/placement/region; echo
+            ;;
         -i|--instance-id)
             echo -n "instance-id: "; curl -s -H "X-aws-ec2-metadata-token: $token" http://169.254.169.254/latest/meta-data/instance-id; echo
             ;;
@@ -32,7 +35,7 @@ ec2_metadata() {
             echo -n "instance-type: "; curl -s -H "X-aws-ec2-metadata-token: $token" http://169.254.169.254/latest/meta-data/instance-type; echo
             ;;
         -o|--local-ipv4)
-            echo -n "availability-zone: "; curl -s -H "X-aws-ec2-metadata-token: $token" http://169.254.169.254/latest/meta-data/local-ipv4; echo
+            echo -n "local-ipv4: "; curl -s -H "X-aws-ec2-metadata-token: $token" http://169.254.169.254/latest/meta-data/local-ipv4; echo
             ;;
         *)
             echo "To see all endpoints, run:"
@@ -42,16 +45,11 @@ ec2_metadata() {
 }
 
 # wait for smilodon to mount /data.
-# Note the space in the grep so we don't get confused by
-# potential future /data2 etc
-#
-# This will also allow us time to get eth1, which is our
-# listen interface (see /etc/default/solr.in.sh)
-
+# can be configured during launch but must be mounted
 shopt -s nocasematch
 
-until grep -qs '/data ' /proc/mounts; do
-  echo "Waiting for /data"
+until grep -qs $ZK_DATA_DIR /proc/mounts; do
+  echo "Waiting for $ZK_DATA_DIR"
 	sleep 15
 done
 
@@ -66,11 +64,11 @@ PRIVATE_ADDRESS=$(ip -4 addr show up | grep -v '127.0.0.1' | awk '/inet / {print
 LISTEN_ADDRESS=$(ip -4 addr show ${INTERFACE} | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
 
 # running in AWS?
-if [ "$DEPLOY_TYPE" == "AWS" ]; then
+if [ "$INSTANCE_TYPE" == "AWS" ]; then
 
     echo "Configure AWS"
-    AWS_REGION=$(curl --silent http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)
-    INSTANCE_ID=$(curl --silent http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .instanceId)
+    AWS_REGION=$(ec2_metadata --region)
+    INSTANCE_ID=$(ec2_metadata --instance-id)
 
     echo " AWS_REGION: $AWS_REGION" >&2
     echo " INSTANCE_ID: $INSTANCE_ID" >&2
@@ -85,54 +83,25 @@ if [ "$DEPLOY_TYPE" == "AWS" ]; then
     ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
 
     # verify all values are setup...
-    if [[ ! -v EXHIBITOR_CONFIG || ! -v S3_BUCKET || ! -v S3_PREFIX ]]; then
+    if [[ -z "$EXHIBITOR_CONFIG" || -z "$S3_BUCKET" || -z "$S3_PREFIX" ]]; then
         echo " EXHIBITOR_CONFIG: $EXHIBITOR_CONFIG" >&2
         echo " S3_BUCKET: $S3_BUCKET" >&2
         echo " S3_PREFIX: $S3_PREFIX" >&2
         die "AWS Not Configured" >&2
     fi
 
-    case $ACCOUNT in
-    963931055713)
-      ACCOUNT_ID=abvprp-prod
-      ;;
-    795569841461)
-      ACCOUNT_ID=abvprp-stage
-      ;;
-    717626221026)
-      ACCOUNT_ID=abvprp-dev
-      ;;
-    377626641391)
-      ACCOUNT_ID=rm-stage
-      ;;
-    362086317309)
-      ACCOUNT_ID=rm-prod
-      ;;
-    *)
-      die "Unsupported AWS account ID $ACCOUNT"
-      ;;
-    esac
-
-elif [ "$DEPLOY_TYPE" == "LOCAL" ]; then
-  ACCOUNT_ID=abvprp-local
-  AWS_REGION="LOCAL"
 fi
 
 JAVA_OPTS="-Djava.awt.headless=true -Xms512m -Xmx512m -XX:+UseConcMarkSweepGC"
 
 MISSING_VAR_MESSAGE="must be set"
 DEFAULT_AWS_REGION="us-west-2"
-DEFAULT_DATA_DIR="/opt/zookeeper/snapshots"
-DEFAULT_LOG_DIR="/opt/zookeeper/transactions"
-DEFAULT_ZK_ENSEMBLE_SIZE=0
 S3_SECURITY=""
 HTTP_PROXY=""
-HOSTNAME=$(get_hostname $DEPLOY_TYPE)
+
+HOSTNAME=$(get_hostname $INSTANCE_TYPE)
 : ${HOSTNAME:=?$MISSING_VAR_MESSAGE}
 : ${AWS_REGION:=$DEFAULT_AWS_REGION}
-: ${ZK_DATA_DIR:=$DEFAULT_DATA_DIR}
-: ${ZK_LOG_DIR:=$DEFAULT_LOG_DIR}
-: ${ZK_ENSEMBLE_SIZE:=$DEFAULT_ZK_ENSEMBLE_SIZE}
 : ${HTTP_PROXY_HOST:=""}
 : ${HTTP_PROXY_PORT:=""}
 : ${HTTP_PROXY_USERNAME:=""}

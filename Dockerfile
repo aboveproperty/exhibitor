@@ -7,12 +7,26 @@ ARG ZK_VERSION=zookeeper-3.4.6
 ARG ZK_FILE=$ZK_VERSION.tar.gz
 ARG EXHIBITOR_FILE=exhibitor-standalone-1.7.1-SNAPSHOT-jar-with-dependencies.jar
 
-# environment configuration
-# deployment type to run LOCAL or AWS
-#   - if AWS is selected then 169.254.169.254 must be available
-#   - if LOCAL is selected then /mnt/zookeeper filesystem must exist
-ENV DEPLOY_TYPE=AWS
+# Environment Configuration
+# -------------------------
+# INSTANCE_TYPE can be either of the following:
+#   AWS   - 169.254.169.254 must be available
+#   LOCAL - $ZOOKEEPER_FILES_PATH must exist (shared filesystem)
+#
+# ACCOUNT_ID        - type of account in human readable terms (eg: "prod")
+#
+# ZK_DATA_DIR       - data directory for Zookeeper
+# ZK_LOG_DIR        - transaction log directory for Zookeeper
+# ZK_ENSEMBLE_SIZE  - size of ZK ensemble
+#
+ENV INSTANCE_TYPE=AWS
 ENV ZOOKEEPER_FILES_PATH=/mnt/zookeeper
+ENV ACCOUNT_ID=local
+
+# useful ZK settings
+ENV ZK_DATA_DIR=/data
+ENV ZK_LOG_DIR=/opt/zookeeper/transactions
+ENV ZK_ENSEMBLE_SIZE=0
 
 # Copy the AWS CLI binary and its embedded dependencies straight over
 COPY --from=aws-cli-source /usr/local/aws-cli/ /usr/local/aws-cli/
@@ -29,7 +43,7 @@ RUN rm /tmp/$ZK_FILE
 RUN cd /opt && ln -s $ZK_VERSION zookeeper
 
 # create additional zk directories
-RUN mkdir -p /opt/zookeeper/snapshots && mkdir -p /opt/zookeeper/transactions
+RUN mkdir -p /opt/zookeeper/transactions
 
 # create exhibitor
 RUN mkdir -p /opt/exhibitor
@@ -40,5 +54,4 @@ EXPOSE 2181 2888 3888 8181
 COPY exhibitor-standalone/src/main/docker/entrypoint.sh /opt/exhibitor/
 WORKDIR /opt/exhibitor
 
-# ENTRYPOINT ["java", "-jar", "exhibitor-standalone.jar", "--port", "8080", "--configtype", "file", "--defaultconfig", "/exhibitor/exhibitor.properties"]
 ENTRYPOINT ["/bin/bash", "/opt/exhibitor/entrypoint.sh"]
