@@ -15,7 +15,26 @@ Please see the doc at https://github.com/Netflix/exhibitor/wiki
 ## BUILDING
 
 Exhibitor is built via Maven (https://maven.apache.org/).  
-To build do `mvn install`.
+To build do `mvn package`.
+
+To create the docker image, after building:
+
+    podman build -t aps-exhibitor .
+
+You will need a volume to mount for data:
+    
+    podman volume create exhibitor-shared
+    podman volume create exhibitor1-data
+
+Once built, you can temporarily launch a local podman instance to verify:
+
+    podman run --rm --name exhibitor1 \
+           -v exhibitor1-data:/data \
+           -v exhibitor-shared:/mnt/zookeeper:z \
+           -e DEPLOY_TYPE=="LOCAL" \
+           -p 8181:8181 aps-exhibitor
+
+Adjust `8181` to match an available port on your machine.
 
 ## ARTIFACTS
 

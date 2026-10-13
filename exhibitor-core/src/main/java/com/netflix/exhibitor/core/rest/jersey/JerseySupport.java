@@ -26,6 +26,8 @@ import com.netflix.exhibitor.core.rest.UIContextResolver;
 import com.netflix.exhibitor.core.rest.UIResource;
 import com.sun.jersey.api.core.DefaultResourceConfig;
 import com.sun.jersey.api.core.ResourceConfig;
+import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
+
 import java.util.Set;
 
 @SuppressWarnings("UnusedDeclaration")
@@ -85,6 +87,7 @@ public class JerseySupport
         final Set<Object> singletons = Sets.newHashSet();
         singletons.add(new UIContextResolver(context));
         singletons.add(new NaturalNotationContextResolver());
+        singletons.add(new JacksonJsonProvider());
         return singletons;
     }
 

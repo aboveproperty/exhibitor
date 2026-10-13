@@ -68,12 +68,6 @@
             <artifactId>jersey-client</artifactId>
         </dependency>
 
-        <!-- if you are using Java 7 you can remove this and switch to the JDK version -->
-        <dependency>
-            <groupId>org.codehaus.jsr166-mirror</groupId>
-            <artifactId>jsr166y</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk</artifactId>

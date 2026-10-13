@@ -17,7 +17,7 @@
         <project.build.resourceEncoding>UTF-8</project.build.resourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <jdk-version>1.6</jdk-version>
+        <jdk-version>1.8</jdk-version>
 
         <maven-compiler-plugin-version>3.5.1</maven-compiler-plugin-version>
         <maven-shade-plugin-version>2.4.3</maven-shade-plugin-version>
@@ -30,23 +30,22 @@
         <maven-resources-plugin-version>3.0.0</maven-resources-plugin-version>
         <maven-scm-provider-gitexe-version>1.9.4</maven-scm-provider-gitexe-version>
 
-        <curator-version>2.7.1</curator-version>
+        <curator-version>4.2.0</curator-version>
         <test-ng-version>6.1.1</test-ng-version>
         <jersey-version>1.18.3</jersey-version>
         <jetty-version>6.1.22</jetty-version>
         <commons-cli-version>1.2</commons-cli-version>
         <servlet-version>2.5</servlet-version>
         <servo-version>0.5.2</servo-version>
-        <guava-version>16.0.1</guava-version>
+        <guava-version>27.0.1-jre</guava-version>
         <jax-rs-version>1.1.1</jax-rs-version>
         <jackson-version>1.9.2</jackson-version>
         <lucene-version>3.6.0</lucene-version>
         <aws-version>1.11.128</aws-version>
         <mockito-version>1.8.5</mockito-version>
-        <zookeeper-version>3.4.5</zookeeper-version>
-        <jsr166-version>1.7.0</jsr166-version>
-        <consul-version>0.14.0</consul-version>
-        <embedded-consul-version>0.3.1</embedded-consul-version>
+        <zookeeper-version>3.4.9</zookeeper-version>
+        <consul-version>1.2.0</consul-version>
+        <embedded-consul-version>1.1.1</embedded-consul-version>
     </properties>
 
     <name>Exhibitor</name>
@@ -118,6 +117,7 @@
                 <groupId>org.testng</groupId>
                 <artifactId>testng</artifactId>
                 <version>${test-ng-version}</version>
+                <scope>test</scope>
             </dependency>
 
             <dependency>
@@ -184,12 +184,25 @@
                 <groupId>org.apache.curator</groupId>
                 <artifactId>curator-recipes</artifactId>
                 <version>${curator-version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.zookeeper</groupId>
+                        <artifactId>zookeeper</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.curator</groupId>
                 <artifactId>curator-test</artifactId>
-                <version>${curator-version}</version>
+                <version>2.12.0</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.zookeeper</groupId>
+                        <artifactId>zookeeper</artifactId>
+                    </exclusion>
+                </exclusions>
+                <scope>test</scope>
             </dependency>
 
             <dependency>
@@ -220,13 +233,6 @@
                 <groupId>org.apache.lucene</groupId>
                 <artifactId>lucene-core</artifactId>
                 <version>${lucene-version}</version>
-            </dependency>
-
-            <!-- if you are using Java 7 you can remove this and switch to the JDK version -->
-            <dependency>
-                <groupId>org.codehaus.jsr166-mirror</groupId>
-                <artifactId>jsr166y</artifactId>
-                <version>${jsr166-version}</version>
             </dependency>
 
             <dependency>
