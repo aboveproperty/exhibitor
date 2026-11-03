@@ -97,7 +97,7 @@ if [ "$INSTANCE_TYPE" == "AWS" ]; then
 
 fi
 
-JAVA_OPTS="-Djava.awt.headless=true -Xms512m -Xmx512m -XX:+UseConcMarkSweepGC"
+JAVA_OPTS="-Djava.awt.headless=true -Xms512m -Xmx512m"
 
 MISSING_VAR_MESSAGE="must be set"
 DEFAULT_AWS_REGION="us-west-2"

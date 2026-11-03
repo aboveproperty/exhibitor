@@ -23,9 +23,9 @@ import com.google.common.io.Resources;
 import com.netflix.exhibitor.core.backup.BackupConfigSpec;
 import com.netflix.exhibitor.core.config.EncodedConfigParser;
 import com.netflix.exhibitor.core.entities.UITabSpec;
-import org.codehaus.jackson.node.ArrayNode;
-import org.codehaus.jackson.node.JsonNodeFactory;
-import org.codehaus.jackson.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.activation.FileTypeMap;
@@ -39,7 +39,7 @@ import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.ext.ContextResolver;
+import javax.ws.rs.ext.Providers;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -99,9 +99,9 @@ public class UIResource
     private static final String     TEXT_UI_TAB_BASE_URL = "tab/";
     private static final String     HTML_UI_TAB_BASE_URL = "tab-html/";
 
-    public UIResource(@Context ContextResolver< UIContext > resolver)
+    public UIResource(@Context Providers providers)
     {
-        context = resolver.getContext(UIContext.class);
+        context = providers.getContextResolver(UIContext.class, MediaType.WILDCARD_TYPE).getContext(UIContext.class);
         tabs = buildTabs();
     }
 

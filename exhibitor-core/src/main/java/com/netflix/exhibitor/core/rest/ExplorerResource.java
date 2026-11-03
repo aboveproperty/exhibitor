@@ -35,15 +35,16 @@ import org.apache.curator.utils.CloseableUtils;
 import org.apache.curator.utils.ZKPaths;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ArrayNode;
-import org.codehaus.jackson.node.JsonNodeFactory;
-import org.codehaus.jackson.node.ObjectNode;
-import org.codehaus.jackson.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.core.type.TypeReference;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ContextResolver;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.ext.Providers;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
@@ -62,9 +63,9 @@ public class ExplorerResource
 
     private static final String         ERROR_KEY = "*";
 
-    public ExplorerResource(@Context ContextResolver<UIContext> resolver)
+    public ExplorerResource(@Context Providers providers)
     {
-        context = resolver.getContext(UIContext.class);
+        context = providers.getContextResolver(UIContext.class, MediaType.WILDCARD_TYPE).getContext(UIContext.class);
     }
 
     public static String bytesToString(byte[] bytes)
@@ -263,7 +264,7 @@ public class ExplorerResource
     public Response     getUsageListing(@QueryParam("request") String json) throws Exception
     {
         ObjectMapper        mapper = new ObjectMapper();
-        UsageListingRequest usageListingRequest = mapper.getJsonFactory().createJsonParser(json).readValueAs(UsageListingRequest.class);
+        UsageListingRequest usageListingRequest = mapper.getFactory().createParser(json).readValueAs(UsageListingRequest.class);
         return usageListing(usageListingRequest);
     }
 
@@ -325,7 +326,7 @@ public class ExplorerResource
     {
         ObjectMapper                                mapper = new ObjectMapper();
         TypeReference<List<PathAnalysisRequest>>    ref = new TypeReference<List<PathAnalysisRequest>>(){};
-        List<PathAnalysisRequest>                   paths = mapper.getJsonFactory().createJsonParser(json).readValueAs(ref);
+        List<PathAnalysisRequest>                   paths = mapper.getFactory().createParser(json).readValueAs(ref);
         return analyze(paths);
     }
 

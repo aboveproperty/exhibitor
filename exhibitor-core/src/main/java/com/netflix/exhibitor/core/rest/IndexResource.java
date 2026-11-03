@@ -39,9 +39,9 @@ import com.netflix.exhibitor.core.index.LogSearch;
 import com.netflix.exhibitor.core.index.QueryBuilder;
 import com.netflix.exhibitor.core.index.SearchItem;
 import org.apache.lucene.search.Query;
-import org.codehaus.jackson.node.ArrayNode;
-import org.codehaus.jackson.node.JsonNodeFactory;
-import org.codehaus.jackson.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -54,7 +54,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ContextResolver;
+import javax.ws.rs.ext.Providers;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -72,9 +72,9 @@ public class IndexResource
     private static final int        MAX_PATH = 50;
     private static final String     DATE_FORMAT_STR = "MM/dd/yyyy-HH:mm:ss";
 
-    public IndexResource(@Context ContextResolver<UIContext> resolver)
+    public IndexResource(@Context Providers providers)
     {
-        context = resolver.getContext(UIContext.class);
+        context = providers.getContextResolver(UIContext.class, MediaType.WILDCARD_TYPE).getContext(UIContext.class);
     }
 
     @Path("new-index")

@@ -1,6 +1,6 @@
 # Pull the official AWS CLI components
 FROM amazon/aws-cli:latest AS aws-cli-source
-FROM amazoncorretto:8-al2023-jdk
+FROM amazoncorretto:17-al2023-headless
 
 # base configuration
 ARG ZK_VERSION=zookeeper-3.4.9
