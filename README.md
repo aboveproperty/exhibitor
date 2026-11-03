@@ -31,7 +31,7 @@ To verify you can launch a temporary local instance:
     podman run --rm --name exhibitor1 \
            -v exhibitor1-data:/data \
            -v exhibitor-shared:/mnt/zookeeper:z \
-           -e DEPLOY_TYPE=="LOCAL" \
+           -e INSTANCE_TYPE=="LOCAL" \
            -p 8181:8181 aps-exhibitor
 
 Adjust `8181` to match an available port on your machine. Once running, your

@@ -48,9 +48,14 @@ ec2_metadata() {
 # can be configured during launch but must be mounted
 shopt -s nocasematch
 
-until grep -qs $ZK_DATA_DIR /proc/mounts; do
-  echo "Waiting for $ZK_DATA_DIR"
-	sleep 15
+# link data dir to /data and wait for mount
+if [ "$ZK_DATA_DIR" != "$ZK_DATA_MNT" ] && [ ! -e "$ZK_DATA_DIR" ]; then
+  ln -s $ZK_DATA_MNT $ZK_DATA_DIR
+fi
+
+until grep -qs "${ZK_DATA_MNT}" /proc/mounts; do
+  echo "Waiting for $ZK_DATA_MNT"
+  sleep 15
 done
 
 # Check if eth1 exists and has an assigned IPv4 address
@@ -67,8 +72,8 @@ LISTEN_ADDRESS=$(ip -4 addr show ${INTERFACE} | grep "inet\b" | awk '{print $2}'
 if [ "$INSTANCE_TYPE" == "AWS" ]; then
 
     echo "Configure AWS"
-    AWS_REGION=$(ec2_metadata --region)
-    INSTANCE_ID=$(ec2_metadata --instance-id)
+    AWS_REGION=$(ec2_metadata --region | awk '{print $NF}')
+    INSTANCE_ID=$(ec2_metadata --instance-id | awk '{print $NF}')
 
     echo " AWS_REGION: $AWS_REGION" >&2
     echo " INSTANCE_ID: $INSTANCE_ID" >&2
@@ -100,7 +105,7 @@ S3_SECURITY=""
 HTTP_PROXY=""
 
 HOSTNAME=$(get_hostname $INSTANCE_TYPE)
-: ${HOSTNAME:=?$MISSING_VAR_MESSAGE}
+: ${HOSTNAME:?$MISSING_VAR_MESSAGE}
 : ${AWS_REGION:=$DEFAULT_AWS_REGION}
 : ${HTTP_PROXY_HOST:=""}
 : ${HTTP_PROXY_PORT:=""}

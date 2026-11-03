@@ -3,7 +3,7 @@ FROM amazon/aws-cli:latest AS aws-cli-source
 FROM amazoncorretto:8-al2023-jdk
 
 # base configuration
-ARG ZK_VERSION=zookeeper-3.4.6
+ARG ZK_VERSION=zookeeper-3.4.9
 ARG ZK_FILE=$ZK_VERSION.tar.gz
 ARG EXHIBITOR_FILE=exhibitor-standalone-1.7.1-SNAPSHOT-jar-with-dependencies.jar
 
@@ -24,7 +24,8 @@ ENV ZOOKEEPER_FILES_PATH=/mnt/zookeeper
 ENV ACCOUNT_ID=local
 
 # useful ZK settings
-ENV ZK_DATA_DIR=/data
+ENV ZK_DATA_MNT=/data
+ENV ZK_DATA_DIR=/opt/zookeeper/snapshots
 ENV ZK_LOG_DIR=/opt/zookeeper/transactions
 ENV ZK_ENSEMBLE_SIZE=0
 

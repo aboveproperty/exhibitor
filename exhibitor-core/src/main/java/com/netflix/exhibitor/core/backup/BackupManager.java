@@ -231,13 +231,13 @@ public class BackupManager implements Closeable
         OutputStream            out = new FileOutputStream(tempFile);
         InputStream in = null;
 
-        if (!backupProvider.isPresent()) {
-            exhibitor.getLog().add(ActivityLog.Type.INFO, "BackupProvider Not Present (for restore): " + tempFile);
-            return;
-        }
-
         try
         {
+            if (!backupProvider.isPresent()) {
+                exhibitor.getLog().add(ActivityLog.Type.INFO, "BackupProvider Not Present (for restore): " + tempFile);
+                return;
+            }
+
             backupProvider.get().downloadBackup(exhibitor, backup, out, getBackupConfig());
             CloseableUtils.closeQuietly(out);
             out = null;
