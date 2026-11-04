@@ -1,6 +1,5 @@
 package com.netflix.exhibitor.core.config.consul;
 
-import com.google.common.base.Optional;
 import com.orbitz.consul.Consul;
 import com.orbitz.consul.KeyValueClient;
 import com.orbitz.consul.model.kv.Value;
@@ -8,6 +7,7 @@ import com.orbitz.consul.model.session.ImmutableSession;
 import com.orbitz.consul.option.QueryOptions;
 
 import java.math.BigInteger;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 public class ConsulKvLock {
@@ -43,7 +43,7 @@ public class ConsulKvLock {
     private String createSession() {
         final ImmutableSession session = ImmutableSession.builder()
                 .name(name)
-                .ttl(Optional.fromNullable(ttl))
+                .ttl(Optional.ofNullable(ttl))
                 .build();
         return consul.sessionClient().createSession(session).getId();
     }

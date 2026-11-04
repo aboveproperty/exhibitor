@@ -20,39 +20,47 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.netflix.exhibitor.core.RemoteConnectionConfiguration;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.filter.ClientFilter;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.ClientRequestFilter;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.SocketException;
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
 
 public class RemoteInstanceRequestClientImpl implements RemoteInstanceRequestClient
 {
     private final Client client;
-    private final LoadingCache<URI, WebResource> webResources = CacheBuilder.newBuilder()
+    private final LoadingCache<URI, WebTarget> webTargets = CacheBuilder.newBuilder()
         .softValues()
         .build
             (
-                new CacheLoader<URI, WebResource>()
+                new CacheLoader<URI, WebTarget>()
                 {
                     @Override
-                    public WebResource load(URI remoteUri) throws Exception
+                    public WebTarget load(URI remoteUri) throws Exception
                     {
-                        return client.resource(remoteUri);
+                        return client.target(remoteUri);
                     }
                 }
             );
 
     public RemoteInstanceRequestClientImpl(RemoteConnectionConfiguration configuration)
     {
-        client = Client.create();
-        client.setConnectTimeout(configuration.getConnectionTimeoutMs());
-        client.setReadTimeout(configuration.getReadTimeoutMs());
-        for ( ClientFilter filter : configuration.getFilters() )
+        client = ClientBuilder.newBuilder()
+            .connectTimeout(configuration.getConnectionTimeoutMs(), TimeUnit.MILLISECONDS)
+            .readTimeout(configuration.getReadTimeoutMs(), TimeUnit.MILLISECONDS)
+            .build();
+        for ( ClientRequestFilter filter : configuration.getFilters() )
         {
-            client.addFilter(filter);
+            client.register(filter);
+        }
+        for ( Feature feature : configuration.getFeatures() )
+        {
+            client.register(feature);
         }
     }
 
@@ -61,7 +69,7 @@ public class RemoteInstanceRequestClientImpl implements RemoteInstanceRequestCli
     {
         try
         {
-            return webResources.get(remoteUri).accept(type).get(clazz);
+            return webTargets.get(remoteUri).request(type).get(clazz);
         }
         catch ( Exception e )
         {
@@ -77,6 +85,6 @@ public class RemoteInstanceRequestClientImpl implements RemoteInstanceRequestCli
     @Override
     public void close() throws IOException
     {
-        client.destroy();
+        client.close();
     }
 }

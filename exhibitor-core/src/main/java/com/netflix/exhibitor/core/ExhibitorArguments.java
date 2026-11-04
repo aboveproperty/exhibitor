@@ -20,7 +20,7 @@ import com.google.common.base.Preconditions;
 import org.apache.curator.framework.api.ACLProvider;
 import com.netflix.exhibitor.core.config.JQueryStyle;
 import com.netflix.exhibitor.core.servo.ServoRegistration;
-import com.sun.jersey.api.client.Client;
+import javax.ws.rs.client.Client;
 
 public class ExhibitorArguments
 {

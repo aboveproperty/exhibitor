@@ -24,8 +24,9 @@ import com.netflix.exhibitor.core.rest.IndexResource;
 import com.netflix.exhibitor.core.rest.UIContext;
 import com.netflix.exhibitor.core.rest.UIContextResolver;
 import com.netflix.exhibitor.core.rest.UIResource;
-import com.sun.jersey.api.core.DefaultResourceConfig;
-import com.sun.jersey.api.core.ResourceConfig;
+import org.glassfish.jersey.jackson.JacksonFeature;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.server.ServerProperties;
 import java.util.Set;
 
 @SuppressWarnings("UnusedDeclaration")
@@ -33,12 +34,18 @@ public class JerseySupport
 {
     public static void      addSingletons(ResourceConfig config, UIContext context)
     {
-        config.getSingletons().addAll(getSingletons(context));
+        for ( Object singleton : getSingletons(context) )
+        {
+            config.register(singleton);
+        }
     }
 
     public static void      addClasses(ResourceConfig config)
     {
-        config.getClasses().addAll(getClasses());
+        for ( Class<?> clazz : getClasses() )
+        {
+            config.register(clazz);
+        }
     }
 
     /**
@@ -48,25 +55,13 @@ public class JerseySupport
      * @param context the UIContext
      * @return new config
      */
-    public static DefaultResourceConfig newApplicationConfig(UIContext context)
+    public static ResourceConfig newApplicationConfig(UIContext context)
     {
-        final Set<Object> singletons = getSingletons(context);
-        final Set<Class<?>> classes = getClasses();
-
-        return new DefaultResourceConfig()
-        {
-            @Override
-            public Set<Class<?>> getClasses()
-            {
-                return classes;
-            }
-
-            @Override
-            public Set<Object> getSingletons()
-            {
-                return singletons;
-            }
-        };
+        ResourceConfig      config = new ResourceConfig();
+        config.property(ServerProperties.WADL_FEATURE_DISABLE, true);
+        addClasses(config);
+        addSingletons(config, context);
+        return config;
     }
 
     private static Set<Class<?>> getClasses()
@@ -77,6 +72,7 @@ public class JerseySupport
         classes.add(ExplorerResource.class);
         classes.add(ClusterResource.class);
         classes.add(ConfigResource.class);
+        classes.add(JacksonFeature.class);
         return classes;
     }
 
@@ -84,7 +80,7 @@ public class JerseySupport
     {
         final Set<Object> singletons = Sets.newHashSet();
         singletons.add(new UIContextResolver(context));
-        singletons.add(new NaturalNotationContextResolver());
+        singletons.add(new ExhibitorObjectMapperProvider());
         return singletons;
     }
 

@@ -21,7 +21,6 @@ package com.netflix.exhibitor.application;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.netflix.exhibitor.servlet.ExhibitorServletFilter;
-import com.sun.jersey.spi.container.servlet.ServletContainer;
 import com.netflix.exhibitor.core.Exhibitor;
 import com.netflix.exhibitor.core.ExhibitorArguments;
 import com.netflix.exhibitor.core.RemoteConnectionConfiguration;
@@ -32,27 +31,37 @@ import com.netflix.exhibitor.core.rest.jersey.JerseySupport;
 import com.netflix.exhibitor.standalone.ExhibitorCreator;
 import com.netflix.exhibitor.standalone.ExhibitorCreatorExit;
 import com.netflix.exhibitor.standalone.SecurityArguments;
-import com.sun.jersey.api.client.filter.ClientFilter;
-import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
-import com.sun.jersey.api.client.filter.HTTPDigestAuthFilter;
-import com.sun.jersey.api.core.DefaultResourceConfig;
 import org.apache.curator.utils.CloseableUtils;
-import org.mortbay.jetty.Handler;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.bio.SocketConnector;
-import org.mortbay.jetty.handler.ContextHandler;
-import org.mortbay.jetty.security.HashUserRealm;
-import org.mortbay.jetty.security.SecurityHandler;
-import org.mortbay.jetty.servlet.Context;
-import org.mortbay.jetty.servlet.ServletHolder;
-import org.mortbay.jetty.webapp.WebAppContext;
-import org.mortbay.jetty.webapp.WebXmlConfiguration;
+import org.eclipse.jetty.security.ConstraintMapping;
+import org.eclipse.jetty.security.ConstraintSecurityHandler;
+import org.eclipse.jetty.security.HashLoginService;
+import org.eclipse.jetty.security.LoginService;
+import org.eclipse.jetty.security.PropertyUserStore;
+import org.eclipse.jetty.security.SecurityHandler;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.resource.Resource;
+import org.eclipse.jetty.util.security.Credential;
+import org.eclipse.jetty.webapp.Configuration;
+import org.eclipse.jetty.webapp.WebAppContext;
+import org.eclipse.jetty.webapp.WebXmlConfiguration;
+import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import javax.servlet.DispatcherType;
+import javax.ws.rs.client.ClientRequestFilter;
+import javax.ws.rs.core.Feature;
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.URL;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -121,7 +130,7 @@ public class ExhibitorMain implements Closeable
 
     public ExhibitorMain(BackupProvider backupProvider, ConfigProvider configProvider, ExhibitorArguments.Builder builder, int httpPort, String listenAddress, SecurityHandler security, SecurityArguments securityArguments) throws Exception
     {
-        HashUserRealm realm = makeRealm(securityArguments);
+        HashLoginService realm = makeRealm(securityArguments);
         if ( securityArguments.getRemoteAuthSpec() != null )
         {
             addRemoteAuth(builder, securityArguments.getRemoteAuthSpec());
@@ -131,16 +140,16 @@ public class ExhibitorMain implements Closeable
         exhibitor = new Exhibitor(configProvider, null, backupProvider, builder.build());
         exhibitor.start();
 
-        DefaultResourceConfig   application = JerseySupport.newApplicationConfig(new UIContext(exhibitor));
+        ResourceConfig          application = JerseySupport.newApplicationConfig(new UIContext(exhibitor));
         ServletContainer        container = new ServletContainer(application);
         server = new Server();
-        SocketConnector http = new SocketConnector();
+        ServerConnector http = new ServerConnector(server);
         http.setHost(listenAddress);
         http.setPort(httpPort);
         server.addConnector(http);
 
-        Context root = new Context(server, "/", Context.SESSIONS);
-        root.addFilter(ExhibitorServletFilter.class, "/", Handler.ALL);
+        ServletContextHandler root = new ServletContextHandler(server, "/", ServletContextHandler.SESSIONS);
+        root.addFilter(ExhibitorServletFilter.class, "/", EnumSet.of(DispatcherType.REQUEST));
         root.addServlet(new ServletHolder(container), "/*");
         if ( security != null )
         {
@@ -162,21 +171,21 @@ public class ExhibitorMain implements Closeable
 
         String password = Preconditions.checkNotNull(users.get(userName), "Realm user not found: " + userName);
 
-        ClientFilter filter;
+        Feature feature;
         if ( type.equals("basic") )
         {
-            filter = new HTTPBasicAuthFilter(userName, password);
+            feature = HttpAuthenticationFeature.basic(userName, password);
         }
         else if ( type.equals("digest") )
         {
-            filter = new HTTPDigestAuthFilter(userName, password);
+            feature = HttpAuthenticationFeature.digest(userName, password);
         }
         else
         {
             throw new IllegalStateException("Unknown remote client authorization type: " + type);
         }
 
-        builder.remoteConnectionConfiguration(new RemoteConnectionConfiguration(Arrays.asList(filter)));
+        builder.remoteConnectionConfiguration(new RemoteConnectionConfiguration(new ArrayList<ClientRequestFilter>(), Collections.singletonList(feature)));
     }
 
     public void start() throws Exception
@@ -242,51 +251,43 @@ public class ExhibitorMain implements Closeable
         };
     }
 
-    private void addSecurityFile(HashUserRealm realm, String securityFile, Context root) throws Exception
+    private void addSecurityFile(HashLoginService realm, String securityFile, ServletContextHandler root) throws Exception
     {
-        // create a temp Jetty context to parse the security portion of the web.xml file
+        // parse the security portion of the web.xml file by starting a throw-away Jetty web app that only reads that descriptor
 
-        /*
-            TODO
-
-            This code assumes far too much internal knowledge of Jetty. I don't know
-            of simple way to parse the web.xml though and don't want to write it myself.
-         */
-
-        final URL url = new URL("file", null, securityFile);
-        final WebXmlConfiguration webXmlConfiguration = new WebXmlConfiguration();
         WebAppContext context = new WebAppContext();
         context.setServer(server);
-        webXmlConfiguration.setWebAppContext(context);
-        ContextHandler contextHandler = new ContextHandler("/")
-        {
-            @Override
-            protected void startContext() throws Exception
-            {
-                super.startContext();
-                setServer(server);
-                webXmlConfiguration.configure(url.toString());
-            }
-        };
+        context.setContextPath("/");
+        context.setBaseResource(Resource.newResource(System.getProperty("java.io.tmpdir")));
+        context.setDescriptor(securityFile);
+        context.setDefaultsDescriptor(null);
+        context.setConfigurations(new Configuration[]{new WebXmlConfiguration()});
+
+        // Jetty 9 requires a login service while the security handler starts. Without a realm, use an empty one so that all authentication fails.
+        LoginService loginService = (realm != null) ? realm : new HashLoginService("exhibitor");
+        ConstraintSecurityHandler parsed = (ConstraintSecurityHandler)context.getSecurityHandler();
+        parsed.setLoginService(loginService);
+
+        // stopping the web app clears what it parsed, so copy the security settings first
+        ConstraintSecurityHandler securityHandler = new ConstraintSecurityHandler();
         try
         {
-            SecurityHandler securityHandler = webXmlConfiguration.getWebAppContext().getSecurityHandler();
+            context.start();
 
-            if ( realm != null )
-            {
-                securityHandler.setUserRealm(realm);
-            }
-
-            root.setSecurityHandler(securityHandler);
-            contextHandler.start();
+            securityHandler.setConstraintMappings(new ArrayList<ConstraintMapping>(parsed.getConstraintMappings()), new HashSet<String>(parsed.getRoles()));
+            securityHandler.setAuthMethod(parsed.getAuthMethod());
+            securityHandler.setRealmName(parsed.getRealmName());
+            securityHandler.setLoginService(loginService);
         }
         finally
         {
-            contextHandler.stop();
+            context.stop();
         }
+
+        root.setSecurityHandler(securityHandler);
     }
 
-    private HashUserRealm makeRealm(SecurityArguments securityArguments) throws Exception
+    private HashLoginService makeRealm(SecurityArguments securityArguments) throws Exception
     {
         if ( securityArguments.getRealmSpec() == null )
         {
@@ -299,15 +300,21 @@ public class ExhibitorMain implements Closeable
             throw new Exception("Bad realm spec: " + securityArguments.getRealmSpec());
         }
 
-        return new HashUserRealm(parts[0].trim(), parts[1].trim())
+        PropertyUserStore userStore = new PropertyUserStore()
         {
             @Override
-            public Object put(Object name, Object credentials)
+            public void addUser(String userName, Credential credential, String[] roles)
             {
-                users.put(String.valueOf(name), String.valueOf(credentials));
+                users.put(userName, String.valueOf(credential));
 
-                return super.put(name, credentials);
+                super.addUser(userName, credential, roles);
             }
         };
+        userStore.setConfig(parts[1].trim());
+        userStore.start();  // loads the users now; remote auth needs their passwords below
+
+        HashLoginService realm = new HashLoginService(parts[0].trim());
+        realm.setUserStore(userStore);
+        return realm;
     }
 }

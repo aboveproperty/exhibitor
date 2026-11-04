@@ -16,7 +16,6 @@
 
 package com.netflix.exhibitor.core.automanage;
 
-import com.sun.jersey.api.client.WebResource;
 import javax.ws.rs.core.MediaType;
 import java.io.Closeable;
 import java.net.URI;
@@ -24,12 +23,12 @@ import java.net.URI;
 public interface RemoteInstanceRequestClient extends Closeable
 {
     /**
-     * Return the WebResource (usually cached) for the given URI
+     * Return the resource (usually cached) for the given URI
      *
      * @param remoteUri URI
      * @param type media type
      * @param clazz resource class
-     * @return WebResource
+     * @return the resource
      * @throws Exception errors
      */
     public <T> T   getWebResource(URI remoteUri, MediaType type, Class<T> clazz) throws Exception;

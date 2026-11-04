@@ -19,159 +19,28 @@ package com.netflix.exhibitor.servlet;
 import com.netflix.exhibitor.core.Exhibitor;
 import com.netflix.exhibitor.core.rest.UIContext;
 import com.netflix.exhibitor.core.rest.jersey.JerseySupport;
-import com.sun.jersey.api.core.DefaultResourceConfig;
-import com.sun.jersey.api.core.ResourceConfig;
+import org.glassfish.jersey.server.ResourceConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.servlet.ServletContext;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class ExhibitorResourceConfig extends ResourceConfig
 {
-    @SuppressWarnings("FieldCanBeLocal")
-    private final Logger                    log = LoggerFactory.getLogger(getClass());
-    private final DefaultResourceConfig     config;
+    private final Logger        log = LoggerFactory.getLogger(getClass());
 
     public ExhibitorResourceConfig(@Context ServletContext context)
     {
-        DefaultResourceConfig   localConfig;
         Exhibitor               exhibitor = (Exhibitor)context.getAttribute(ExhibitorServletContextListener.class.getName());
         if ( exhibitor != null )
         {
             log.info("Adding Exhibitor Jersey resources");
-            localConfig = JerseySupport.newApplicationConfig(new UIContext(exhibitor));
+            JerseySupport.addClasses(this);
+            JerseySupport.addSingletons(this, new UIContext(exhibitor));
         }
         else
         {
-            log.info("Using DefaultResourceConfig");
-            localConfig = new DefaultResourceConfig();
+            log.info("Using empty ResourceConfig");
         }
-        config = localConfig;
-    }
-
-    @Override
-    public Set<Class<?>> getClasses()
-    {
-        return config.getClasses();
-    }
-
-    @Override
-    public Set<Object> getSingletons()
-    {
-        return config.getSingletons();
-    }
-
-    @Override
-    public Map<String, MediaType> getMediaTypeMappings()
-    {
-        return config.getMediaTypeMappings();
-    }
-
-    @Override
-    public Map<String, String> getLanguageMappings()
-    {
-        return config.getLanguageMappings();
-    }
-
-    @Override
-    public Map<String, Object> getExplicitRootResources()
-    {
-        return config.getExplicitRootResources();
-    }
-
-    @Override
-    public Map<String, Boolean> getFeatures()
-    {
-        return config.getFeatures();
-    }
-
-    @Override
-    public boolean getFeature(String featureName)
-    {
-        return config.getFeature(featureName);
-    }
-
-    @Override
-    public Map<String, Object> getProperties()
-    {
-        return config.getProperties();
-    }
-
-    @Override
-    public Object getProperty(String propertyName)
-    {
-        return config.getProperty(propertyName);
-    }
-
-    @Override
-    public void validate()
-    {
-        config.validate();
-    }
-
-    @Override
-    public Set<Class<?>> getRootResourceClasses()
-    {
-        return config.getRootResourceClasses();
-    }
-
-    @Override
-    public Set<Class<?>> getProviderClasses()
-    {
-        return config.getProviderClasses();
-    }
-
-    @Override
-    public Set<Object> getRootResourceSingletons()
-    {
-        return config.getRootResourceSingletons();
-    }
-
-    @Override
-    public Set<Object> getProviderSingletons()
-    {
-        return config.getProviderSingletons();
-    }
-
-    @Override
-    public List getContainerRequestFilters()
-    {
-        return config.getContainerRequestFilters();
-    }
-
-    @Override
-    public List getContainerResponseFilters()
-    {
-        return config.getContainerResponseFilters();
-    }
-
-    @Override
-    public List getResourceFilterFactories()
-    {
-        return config.getResourceFilterFactories();
-    }
-
-    @Override
-    public void setPropertiesAndFeatures(Map<String, Object> entries)
-    {
-        config.setPropertiesAndFeatures(entries);
-    }
-
-    @Override
-    public void add(Application app)
-    {
-        config.add(app);
-    }
-
-    @SuppressWarnings("CloneDoesntCallSuperClone")
-    @Override
-    public ResourceConfig clone()
-    {
-        return config.clone();
     }
 }

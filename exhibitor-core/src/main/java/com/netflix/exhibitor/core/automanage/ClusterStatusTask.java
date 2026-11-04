@@ -23,13 +23,13 @@ import com.netflix.exhibitor.core.entities.ServerStatus;
 import com.netflix.exhibitor.core.state.InstanceStateTypes;
 import com.netflix.exhibitor.core.state.ServerSpec;
 import com.netflix.exhibitor.core.state.UsState;
-import jsr166y.RecursiveTask;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.RecursiveTask;
 
 public class ClusterStatusTask extends RecursiveTask<List<ServerStatus>>
 {
@@ -98,15 +98,15 @@ public class ClusterStatusTask extends RecursiveTask<List<ServerStatus>>
             RemoteInstanceRequest.Result    result = request.makeRequest(exhibitor.getRemoteInstanceRequestClient(), "getStatus");
 
             ObjectMapper                    mapper = new ObjectMapper();
-            JsonNode                        value = mapper.readTree(mapper.getJsonFactory().createJsonParser(result.remoteResponse));
+            JsonNode                        value = mapper.readTree(mapper.getFactory().createParser(result.remoteResponse));
             if ( value.size() == 0 )
             {
                 return new ServerStatus(spec.getHostname(), InstanceStateTypes.DOWN.getCode(), InstanceStateTypes.DOWN.getDescription(), false);
             }
 
             int                             code = value.get("state").asInt();
-            String                          description = value.get("description").getTextValue();
-            return new ServerStatus(spec.getHostname(), code, description, value.get("isLeader").getBooleanValue());
+            String                          description = value.get("description").textValue();
+            return new ServerStatus(spec.getHostname(), code, description, value.get("isLeader").booleanValue());
         }
         catch ( IOException e )
         {

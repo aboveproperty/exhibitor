@@ -106,11 +106,11 @@ public class ConsulConfigProvider implements ConfigProvider {
     }
 
     private String getString(String path) {
-        return consul.keyValueClient().getValueAsString(path).orNull();
+        return consul.keyValueClient().getValueAsString(path).orElse(null);
     }
 
     private Long getLong(String path) {
-        return Long.valueOf(consul.keyValueClient().getValueAsString(path).or("0"));
+        return Long.valueOf(consul.keyValueClient().getValueAsString(path).orElse("0"));
     }
 
     private ConsulVersionedProperties loadProperties() throws Exception {

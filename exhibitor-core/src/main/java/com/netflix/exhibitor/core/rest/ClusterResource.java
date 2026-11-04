@@ -32,10 +32,10 @@ import com.netflix.exhibitor.core.state.MonitorRunningInstance;
 import com.netflix.exhibitor.core.state.ServerList;
 import com.netflix.exhibitor.core.state.ServerSpec;
 import com.netflix.exhibitor.core.state.StartInstance;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ArrayNode;
-import org.codehaus.jackson.node.JsonNodeFactory;
-import org.codehaus.jackson.node.ObjectNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -45,7 +45,7 @@ import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.ext.ContextResolver;
+import javax.ws.rs.ext.Providers;
 import java.net.URLEncoder;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -56,9 +56,9 @@ public class ClusterResource
 {
     private final UIContext context;
 
-    public ClusterResource(@Context ContextResolver<UIContext> resolver)
+    public ClusterResource(@Context Providers providers)
     {
-        context = resolver.getContext(UIContext.class);
+        context = providers.getContextResolver(UIContext.class, MediaType.WILDCARD_TYPE).getContext(UIContext.class);
     }
 
     @Path("status")
@@ -425,7 +425,7 @@ public class ClusterResource
         ObjectNode          node = JsonNodeFactory.instance.objectNode();
         if ( responseIsJson )
         {
-            node.put("response", mapper.readTree(mapper.getJsonFactory().createJsonParser(remoteResponse)));
+            node.set("response", mapper.readTree(remoteResponse));
         }
         else
         {
