@@ -2,9 +2,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.soabase.exhibitor</groupId>
+    <groupId>com.abvprp</groupId>
     <artifactId>exhibitor</artifactId>
-    <version>1.7.1-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -101,16 +101,14 @@
     </issueManagement>
 
     <distributionManagement>
-        <repository>
-            <id>sonatype-nexus-staging</id>
-            <name>Sonatype Nexus Staging</name>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
-        </repository>
         <snapshotRepository>
-            <id>sonatype-nexus-snapshots</id>
-            <name>Sonatype Nexus Snapshots</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+            <id>dev-nexus-abvprp</id>
+            <url>https://nexus.dev.abvprp.com/content/repositories/snapshots/</url>
         </snapshotRepository>
+        <repository>
+            <id>dev-nexus-abvprp</id>
+            <url>https://nexus.dev.abvprp.com/content/repositories/releases/</url>
+        </repository>
     </distributionManagement>
 
     <dependencyManagement>
@@ -123,7 +121,7 @@
             </dependency>
 
             <dependency>
-                <groupId>io.soabase.exhibitor</groupId>
+                <groupId>com.abvprp</groupId>
                 <artifactId>exhibitor-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
