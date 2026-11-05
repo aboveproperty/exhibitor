@@ -3,9 +3,9 @@ FROM amazon/aws-cli:latest AS aws-cli-source
 FROM amazoncorretto:17-al2023-headless
 
 # base configuration
-ARG ZK_VERSION=zookeeper-3.4.9
+ARG ZK_VERSION=zookeeper-3.5.9
 ARG ZK_FILE=$ZK_VERSION.tar.gz
-ARG EXHIBITOR_FILE=exhibitor-standalone-1.7.1-SNAPSHOT-jar-with-dependencies.jar
+ARG EXHIBITOR_FILE=exhibitor-standalone-2.0.1-SNAPSHOT-jar-with-dependencies.jar
 
 # Environment Configuration
 # -------------------------

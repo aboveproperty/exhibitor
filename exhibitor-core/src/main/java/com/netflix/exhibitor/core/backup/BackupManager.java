@@ -45,11 +45,12 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
 import org.apache.curator.utils.CloseableUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BackupManager implements Closeable
 {
-    private static Logger log = Logger.getLogger(BackupManager.class);
+    private static Logger log = LoggerFactory.getLogger(BackupManager.class);
     private final Exhibitor exhibitor;
     private final Optional<BackupProvider> backupProvider;
     private final RepeatingActivity repeatingActivity;

@@ -30,7 +30,8 @@
         <maven-resources-plugin-version>3.0.0</maven-resources-plugin-version>
         <maven-scm-provider-gitexe-version>1.9.4</maven-scm-provider-gitexe-version>
 
-        <curator-version>4.2.0</curator-version>
+        <curator-version>5.1.0</curator-version>
+        <zookeeper-version>3.5.9</zookeeper-version>
         <test-ng-version>6.14.3</test-ng-version>
         <jersey-version>2.41</jersey-version>
         <jetty-version>9.4.57.v20241219</jetty-version>
@@ -45,7 +46,6 @@
         <lucene-version>3.6.0</lucene-version>
         <aws-version>1.11.128</aws-version>
         <mockito-version>3.12.4</mockito-version>
-        <zookeeper-version>3.4.9</zookeeper-version>
         <consul-version>1.2.0</consul-version>
         <embedded-consul-version>1.1.1</embedded-consul-version>
     </properties>
