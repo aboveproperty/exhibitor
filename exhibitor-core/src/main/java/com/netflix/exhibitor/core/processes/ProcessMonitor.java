@@ -130,17 +130,12 @@ public class ProcessMonitor implements Closeable
             @Override
             public void run()
             {
-                System.out.println("makeEofProc:run");
-
                 try
                 {
-                    System.out.println("makeEofProc:waitFor");
                     process.waitFor();
                 }
                 catch ( InterruptedException e )
                 {
-                    System.out.println("makeEofProc:InterruptedException");
-
                     Thread.currentThread().interrupt();
                     if ( mode == Mode.DESTROY_ON_INTERRUPT )
                     {
@@ -151,8 +146,6 @@ public class ProcessMonitor implements Closeable
                         process.destroy();
                     }
                 }
-                System.out.println(String.format("makeEofProc:completionMessage:%s",
-                        completionMessage));
 
                 if ( completionMessage != null )
                 {
