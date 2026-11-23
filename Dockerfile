@@ -1,10 +1,10 @@
 # Pull the official AWS CLI components
 FROM amazon/aws-cli:latest AS aws-cli-source
-FROM amazoncorretto:17-al2023-headless
+FROM amazoncorretto:8-al2023-jdk
 
 # base configuration
 ARG ZK_VERSION=zookeeper-3.5.9
-ARG ZK_FILE=$ZK_VERSION.tar.gz
+ARG ZK_FILE=apache-$ZK_VERSION-bin.tar.gz
 ARG EXHIBITOR_FILE=exhibitor-standalone-2.0.1-SNAPSHOT-jar-with-dependencies.jar
 
 # Environment Configuration
@@ -34,17 +34,17 @@ COPY --from=aws-cli-source /usr/local/aws-cli/ /usr/local/aws-cli/
 COPY --from=aws-cli-source /usr/local/bin/ /usr/local/bin/
 
 # install dependencies for this container
-RUN dnf install -y gzip tar jq iproute hostname && dnf clean all
+RUN dnf install -y gzip tar jq iproute hostname procps-ng && dnf clean all
 
 # configure zookeeper
 RUN cd /tmp && curl -L -O http://archive.apache.org/dist/zookeeper/$ZK_VERSION/$ZK_FILE
 RUN cd /opt && tar zxf /tmp/$ZK_FILE
 RUN rm /tmp/$ZK_FILE
 
-RUN cd /opt && ln -s $ZK_VERSION zookeeper
+RUN cd /opt && ln -s apache-$ZK_VERSION-bin zookeeper
 
 # create additional zk directories
-RUN mkdir -p /opt/zookeeper/transactions
+# RUN mkdir -p /opt/zookeeper/transactions
 
 # create exhibitor
 RUN mkdir -p /opt/exhibitor

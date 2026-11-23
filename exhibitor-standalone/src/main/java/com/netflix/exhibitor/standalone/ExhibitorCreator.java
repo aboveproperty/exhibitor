@@ -157,7 +157,7 @@ public class ExhibitorCreator
         int logWindowSizeLines = Integer.parseInt(commandLine.getOptionValue(LOGLINES, "1000"));
         int configCheckMs = Integer.parseInt(commandLine.getOptionValue(CONFIGCHECKMS, "30000"));
         String useHostname = commandLine.getOptionValue(HOSTNAME, cli.getHostname());
-        int httpPort = Integer.parseInt(commandLine.getOptionValue(HTTP_PORT, "8080"));
+        int httpPort = Integer.parseInt(commandLine.getOptionValue(HTTP_PORT, "8181"));
         String listenAddress = commandLine.getOptionValue(LISTEN_ADDRESS, "0.0.0.0");
         String extraHeadingText = commandLine.getOptionValue(EXTRA_HEADING_TEXT, null);
         boolean allowNodeMutations = "true".equalsIgnoreCase(commandLine.getOptionValue(NODE_MUTATIONS, "true"));
