@@ -7,9 +7,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.soabase.exhibitor</groupId>
+            <groupId>com.abvprp</groupId>
             <artifactId>exhibitor-standalone</artifactId>
-            <version>${project.version}</version>
+            <version>2.0.1</version>
         </dependency>
     </dependencies>
 
