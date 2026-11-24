@@ -19,7 +19,6 @@ package com.netflix.exhibitor.standalone;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.common.net.HostAndPort;
 import com.netflix.exhibitor.core.ExhibitorArguments;
 import com.netflix.exhibitor.core.backup.BackupProvider;
 import com.netflix.exhibitor.core.backup.filesystem.FileSystemBackupProvider;
@@ -49,9 +48,10 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.cli.UnrecognizedOptionException;
-import org.apache.curator.ensemble.exhibitor.DefaultExhibitorRestClient;
-import org.apache.curator.ensemble.exhibitor.ExhibitorEnsembleProvider;
-import org.apache.curator.ensemble.exhibitor.Exhibitors;
+import org.apache.ensemble.exhibitor.DefaultExhibitorRestClient;
+import org.apache.ensemble.exhibitor.ExhibitorEnsembleProvider;
+import org.apache.ensemble.exhibitor.Exhibitors;
+import org.apache.curator.ensemble.EnsembleProvider;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.api.ACLProvider;
@@ -72,9 +72,7 @@ import org.eclipse.jetty.util.security.Credential;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.BufferedInputStream;
 import java.io.Closeable;
@@ -159,7 +157,7 @@ public class ExhibitorCreator
         int logWindowSizeLines = Integer.parseInt(commandLine.getOptionValue(LOGLINES, "1000"));
         int configCheckMs = Integer.parseInt(commandLine.getOptionValue(CONFIGCHECKMS, "30000"));
         String useHostname = commandLine.getOptionValue(HOSTNAME, cli.getHostname());
-        int httpPort = Integer.parseInt(commandLine.getOptionValue(HTTP_PORT, "8080"));
+        int httpPort = Integer.parseInt(commandLine.getOptionValue(HTTP_PORT, "8181"));
         String listenAddress = commandLine.getOptionValue(LISTEN_ADDRESS, "0.0.0.0");
         String extraHeadingText = commandLine.getOptionValue(EXTRA_HEADING_TEXT, null);
         boolean allowNodeMutations = "true".equalsIgnoreCase(commandLine.getOptionValue(NODE_MUTATIONS, "true"));
@@ -661,8 +659,8 @@ public class ExhibitorCreator
             .retryPolicy(retryPolicy);
         if ( exhibitorPort > 0 )
         {
-            Exhibitors                  exhibitors = new Exhibitors(hostnames, exhibitorPort, backupConnectionStringProvider);
-            ExhibitorEnsembleProvider   ensembleProvider = new ExhibitorEnsembleProvider(exhibitors, new DefaultExhibitorRestClient(), exhibitorRestPath + "exhibitor/v1/cluster/list", pollingMs, retryPolicy);
+            Exhibitors exhibitors = new Exhibitors(hostnames, exhibitorPort, backupConnectionStringProvider);
+            EnsembleProvider ensembleProvider = new ExhibitorEnsembleProvider(exhibitors, new DefaultExhibitorRestClient(), exhibitorRestPath + "exhibitor/v1/cluster/list", pollingMs, retryPolicy);
             builder = builder.ensembleProvider(ensembleProvider);
         }
         else

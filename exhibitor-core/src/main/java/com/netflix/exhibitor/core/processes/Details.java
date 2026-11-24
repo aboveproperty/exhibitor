@@ -26,12 +26,9 @@ import com.netflix.exhibitor.core.config.StringConfigs;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 class Details
 {
@@ -40,7 +37,7 @@ class Details
     final File logDirectory;
     final File configDirectory;
     final String logPaths;
-    final String zooKeeperJarPath;
+    final List<String> zooKeeperJarPath;
     final Properties properties;
 
     Details(Exhibitor exhibitor) throws IOException
@@ -55,7 +52,7 @@ class Details
 
         configDirectory = new File(zooKeeperDirectory, "conf");
         logPaths = findJar(new File(zooKeeperDirectory, "lib"), "(.*log4j.*)|(.*slf4j.*)");
-        zooKeeperJarPath = findJar(this.zooKeeperDirectory, "zookeeper.*");
+        zooKeeperJarPath = findJars(new File(this.zooKeeperDirectory, "lib"), "zookeeper.*");
 
         properties = new Properties();
         if ( isValid() )
@@ -117,7 +114,7 @@ class Details
 
     private boolean isValidPath(File directory)
     {
-        return directory.getPath().length() > 0;
+        return !directory.getPath().isEmpty();
     }
 
     private String findJar(File dir, String regex) throws IOException
@@ -158,5 +155,47 @@ class Details
                 }
             );
         return Joiner.on(':').join(transformed);
+    }
+
+    private List<String> findJars(File dir, String regex) throws IOException {
+        if (!isValid()) {
+            return new LinkedList<>();
+        }
+
+        final Pattern pattern = Pattern.compile(regex);
+        File[] files = dir.listFiles
+                (
+                        new FileFilter() {
+                            @Override
+                            public boolean accept(File f) {
+                                return pattern.matcher(f.getName()).matches() && f.getName().endsWith(".jar");
+                            }
+                        }
+                );
+
+        if ((files == null) || (files.length == 0)) {
+            throw new IOException("Could not find " + regex + " jar in directory " + dir.getAbsolutePath());
+        }
+
+        return Arrays.stream(files)
+                .map(File::getPath)
+                .collect(Collectors.toList());
+
+    }
+
+    /**
+     * Convert the detail for running the application to a CLASSPATH (operating system delimited).
+     * @return  Java classpath for the application instance.
+     */
+    public String getZooKeeperClasspath() {
+
+        List<String> classpath = new LinkedList<>(zooKeeperJarPath);
+        classpath.add(this.logPaths);
+        classpath.add(this.configDirectory.getPath());
+
+        final String pathDelimiter = java.io.File.pathSeparator;
+
+        return classpath.stream().collect(Collectors.joining(pathDelimiter));
+
     }
 }

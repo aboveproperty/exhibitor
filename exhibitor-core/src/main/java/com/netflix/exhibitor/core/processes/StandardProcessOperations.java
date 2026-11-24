@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.time.Duration;
 import java.util.Date;
 import java.util.Properties;
 
@@ -62,7 +63,7 @@ public class StandardProcessOperations implements ProcessOperations
         (
             "java",
             "-cp",
-            String.format("%s:%s:%s", details.zooKeeperJarPath, details.logPaths, details.configDirectory.getPath()),
+            details.getZooKeeperClasspath(),
             "org.apache.zookeeper.server.PurgeTxnLog",
             details.logDirectory.getPath(),
             details.dataDirectory.getPath(),
@@ -122,7 +123,11 @@ public class StandardProcessOperations implements ProcessOperations
 
         ProcessBuilder  builder = buildZkServerScript("start");
 
-        exhibitor.getProcessMonitor().monitor(ProcessTypes.ZOOKEEPER, builder.start(), null, ProcessMonitor.Mode.LEAVE_RUNNING_ON_INTERRUPT, ProcessMonitor.Streams.BOTH);
+        exhibitor.getProcessMonitor().monitor(ProcessTypes.ZOOKEEPER,
+                builder.start(),
+                null,
+                ProcessMonitor.Mode.LEAVE_RUNNING_ON_INTERRUPT,
+                ProcessMonitor.Streams.BOTH);
 
         exhibitor.getLog().add(ActivityLog.Type.INFO, "Process started via: " + builder.command().get(0));
     }
